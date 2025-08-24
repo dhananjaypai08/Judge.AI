@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Hackathon AI Judge',
-  description: 'AI-powered hackathon project evaluation and scoring system',
+  title: 'Judge.AI',
+  description: 'Making fair judgment calls on innovation',
   keywords: 'hackathon, AI, judging, evaluation, scoring, projects',
   authors: [{ name: 'Hackathon Judge AI' }],
   robots: 'index, follow',

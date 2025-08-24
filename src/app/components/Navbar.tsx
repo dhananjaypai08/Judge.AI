@@ -26,9 +26,9 @@ export const Navbar: React.FC<NavbarProps> = ({ stats }) => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  Hackathon AI Judge
+                  Judge.AI
                 </h1>
-                <p className="text-sm text-gray-500 font-medium">Professional Project Evaluation System</p>
+                <p className="text-sm text-gray-500 font-medium">Making fair judgment calls on innovation</p>
               </div>
             </div>
           </div>
