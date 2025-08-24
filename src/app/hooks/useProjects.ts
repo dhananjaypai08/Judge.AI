@@ -33,7 +33,6 @@ export const useProjects = (): UseProjectsResult => {
     setError(null);
     
     try {
-      // Fetch all projects with pagination
       const allProjects: Project[] = [];
       let from = 0;
       const size = 100;
@@ -43,7 +42,7 @@ export const useProjects = (): UseProjectsResult => {
         const response = await fetch(`/api/projects?from=${from}&size=${size}`);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch projects');
+          throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
@@ -53,21 +52,23 @@ export const useProjects = (): UseProjectsResult => {
         }
 
         allProjects.push(...data.projects);
-        
-        // Check if we have more projects
         hasMore = data.projects.length === size && allProjects.length < data.total;
         from += size;
 
-        // Safety break to prevent infinite loops
+        // Safety break
         if (allProjects.length >= 500) {
           console.warn('Reached maximum project limit (500)');
           break;
         }
       }
 
-      // Convert to ScoredProject format
+      // Convert to ScoredProject format with proper slug handling
       const scoredProjects: ScoredProject[] = allProjects.map(project => ({
         ...project,
+        // Ensure slug exists - generate from name if missing
+        slug: project.slug || project.name.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '') || `project-${project.uuid}`,
         aiScore: undefined,
         isLoading: false,
         hasError: false
@@ -86,10 +87,10 @@ export const useProjects = (): UseProjectsResult => {
   }, []);
 
   const judgeSingleProject = useCallback(async (project: ScoredProject) => {
-    // Update project loading state
+    // Update project loading state immediately
     setProjects(prev => prev.map(p => 
       p.uuid === project.uuid 
-        ? { ...p, isLoading: true, hasError: false }
+        ? { ...p, isLoading: true, hasError: false, aiScore: undefined }
         : p
     ));
 
@@ -103,7 +104,7 @@ export const useProjects = (): UseProjectsResult => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to judge project');
+        throw new Error(`Failed to judge project: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -119,13 +120,15 @@ export const useProjects = (): UseProjectsResult => {
           : p
       ));
 
+      console.log(`Successfully judged project: ${project.name}`);
+
     } catch (err) {
       console.error('Error judging project:', err);
       
       // Update project error state
       setProjects(prev => prev.map(p => 
         p.uuid === project.uuid 
-          ? { ...p, isLoading: false, hasError: true }
+          ? { ...p, isLoading: false, hasError: true, aiScore: undefined }
           : p
       ));
     }
@@ -142,18 +145,15 @@ export const useProjects = (): UseProjectsResult => {
     setJudgingProgress({ current: 0, total: projects.length, projectName: '' });
 
     try {
-      // Process projects in small batches to avoid overwhelming the API
       const batchSize = 3;
       let processed = 0;
 
       for (let i = 0; i < projects.length; i += batchSize) {
         const batch = projects.slice(i, i + batchSize);
         
-        // Process batch in parallel
         const promises = batch.map(async (project, index) => {
           const globalIndex = i + index;
           
-          // Update progress
           setJudgingProgress({
             current: globalIndex + 1,
             total: projects.length,
@@ -163,7 +163,7 @@ export const useProjects = (): UseProjectsResult => {
           // Update project loading state
           setProjects(prev => prev.map(p => 
             p.uuid === project.uuid 
-              ? { ...p, isLoading: true, hasError: false }
+              ? { ...p, isLoading: true, hasError: false, aiScore: undefined }
               : p
           ));
 
@@ -198,10 +198,9 @@ export const useProjects = (): UseProjectsResult => {
           } catch (err) {
             console.error(`Error judging project ${project.name}:`, err);
             
-            // Update project error state
             setProjects(prev => prev.map(p => 
               p.uuid === project.uuid 
-                ? { ...p, isLoading: false, hasError: true }
+                ? { ...p, isLoading: false, hasError: true, aiScore: undefined }
                 : p
             ));
 
@@ -209,11 +208,10 @@ export const useProjects = (): UseProjectsResult => {
           }
         });
 
-        // Wait for batch to complete
         await Promise.allSettled(promises);
         processed += batch.length;
 
-        // Rate limiting: wait between batches (except for the last batch)
+        // Rate limiting between batches
         if (i + batchSize < projects.length) {
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
@@ -238,6 +236,7 @@ export const useProjects = (): UseProjectsResult => {
       isLoading: false,
       hasError: false
     })));
+    console.log('Cleared all AI scoring results');
   }, []);
 
   return {

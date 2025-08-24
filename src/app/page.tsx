@@ -22,7 +22,9 @@ import {
   CheckSquare,
   X,
   SlidersHorizontal,
-  ArrowUpDown
+  ArrowUpDown,
+  Target,
+  Activity
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -41,7 +43,21 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'score' | 'name' | 'views' | 'likes' | 'created'>('score');
   const [filterBy, setFilterBy] = useState<'all' | 'scored' | 'flagged' | 'unflagged' | 'no-github'>('all');
+  const [selectedTrack, setSelectedTrack] = useState<string>('all');
   const [showOnlyScored, setShowOnlyScored] = useState(false);
+
+  // Get all unique prize tracks
+  const availableTracks = useMemo(() => {
+    const tracks = new Map();
+    projects.forEach(project => {
+      project.prize_tracks?.forEach(track => {
+        if (!tracks.has(track.uuid)) {
+          tracks.set(track.uuid, track);
+        }
+      });
+    });
+    return Array.from(tracks.values());
+  }, [projects]);
 
   // Enhanced Statistics
   const stats = useMemo(() => {
@@ -78,14 +94,19 @@ export default function HomePage() {
         if (!matchesSearch) return false;
       }
 
-      // Category filter - PROPERLY IMPLEMENTED UNFLAGGED LOGIC
+      // Prize track filter
+      if (selectedTrack !== 'all') {
+        const hasTrack = project.prize_tracks?.some(track => track.uuid === selectedTrack);
+        if (!hasTrack) return false;
+      }
+
+      // Category filter
       switch (filterBy) {
         case 'scored':
           return project.aiScore !== undefined;
         case 'flagged':
           return !project.has_github_link || (project.aiScore?.flags && project.aiScore.flags.length > 0);
         case 'unflagged':
-          // Clean projects: has GitHub AND (no AI score yet OR AI score with no flags)
           return project.has_github_link && (!project.aiScore || !project.aiScore.flags || project.aiScore.flags.length === 0);
         case 'no-github':
           return !project.has_github_link;
@@ -118,7 +139,7 @@ export default function HomePage() {
           return 0;
       }
     });
-  }, [projects, searchQuery, sortBy, filterBy, showOnlyScored]);
+  }, [projects, searchQuery, sortBy, filterBy, selectedTrack, showOnlyScored]);
 
   const exportResults = () => {
     const scoredProjects = projects.filter(p => p.aiScore);
@@ -136,7 +157,7 @@ export default function HomePage() {
     };
 
     const csvContent = [
-      ['Name', 'Score', 'Grade', 'Technical', 'Innovation', 'Value Prop', 'Completeness', 'Market', 'Code Quality', 'Flags', 'GitHub Link', 'Links'].join(','),
+      ['Name', 'Score', 'Grade', 'Technical', 'Innovation', 'Value Prop', 'Completeness', 'Market', 'Code Quality', 'Flags', 'GitHub Link', 'Links', 'Devfolio URL'].join(','),
       ...scoredProjects.map(p => [
         `"${p.name}"`,
         p.aiScore!.overallScore,
@@ -149,7 +170,8 @@ export default function HomePage() {
         p.aiScore!.breakdown.codeQuality,
         `"${p.aiScore!.flags ? p.aiScore!.flags.join('; ') : ''}"`,
         p.has_github_link ? 'Yes' : 'No',
-        `"${p.links}"`
+        `"${p.links}"`,
+        `"https://devfolio.co/projects/${p.slug}"`
       ].join(','))
     ].join('\n');
 
@@ -166,161 +188,189 @@ export default function HomePage() {
 
   const filterOptions = [
     { value: 'all', label: 'All Projects', icon: Users, count: stats.total },
-    { value: 'scored', label: 'Scored Only', icon: Award, count: stats.scored },
-    { value: 'flagged', label: 'Flagged Issues', icon: Flag, count: stats.flagged },
-    { value: 'unflagged', label: 'Clean Projects', icon: CheckSquare, count: stats.unflagged },
+    { value: 'scored', label: 'Scored', icon: Award, count: stats.scored },
+    { value: 'flagged', label: 'Flagged', icon: Flag, count: stats.flagged },
+    { value: 'unflagged', label: 'Clean', icon: CheckSquare, count: stats.unflagged },
     { value: 'no-github', label: 'No GitHub', icon: AlertCircle, count: projects.filter(p => !p.has_github_link).length },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Professional Navbar */}
       <Navbar stats={stats} />
 
-      {/* Main Content Container */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+      {/* Hero Section */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+          <div className="text-center max-w-3xl mx-auto">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              AI-Powered Hackathon Judging
+            </h1>
+            <p className="text-xl text-gray-600 leading-relaxed">
+              Comprehensive evaluation system that analyzes technical implementation, innovation, 
+              market potential, and code quality with advanced machine learning models.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
         {/* Action Bar */}
-        <div className="mb-12">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-8">
-              <div className="flex flex-wrap items-center gap-4">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <button
+                onClick={fetchProjects}
+                disabled={loading || judging}
+                className="flex items-center gap-3 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                <span>{projects.length > 0 ? 'Refresh Projects' : 'Fetch Projects'}</span>
+              </button>
+
+              {projects.length > 0 && (
                 <button
-                  onClick={fetchProjects}
-                  disabled={loading || judging}
-                  className="btn-primary flex items-center space-x-3 text-base px-8 py-4"
+                  onClick={judgeAllProjects}
+                  disabled={judging || loading}
+                  className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                  <span>{projects.length > 0 ? 'Refresh Projects' : 'Fetch All Projects'}</span>
+                  <Zap size={20} />
+                  <span>Judge All Projects</span>
                 </button>
-
-                {projects.length > 0 && (
-                  <button
-                    onClick={judgeAllProjects}
-                    disabled={judging || loading}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 flex items-center space-x-3 shadow-lg hover:shadow-xl text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Zap size={20} />
-                    <span>Judge All Projects</span>
-                  </button>
-                )}
-
-                {stats.scored > 0 && (
-                  <button
-                    onClick={exportResults}
-                    className="btn-secondary flex items-center space-x-3 text-base px-8 py-4"
-                  >
-                    <Download size={20} />
-                    <span>Export Results</span>
-                  </button>
-                )}
-              </div>
+              )}
 
               {stats.scored > 0 && (
                 <button
-                  onClick={clearResults}
-                  className="text-gray-600 hover:text-red-600 font-semibold flex items-center space-x-2 px-4 py-2 rounded-xl hover:bg-red-50 transition-colors"
+                  onClick={exportResults}
+                  className="flex items-center gap-3 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-semibold transition-colors"
                 >
-                  <X size={16} />
-                  <span>Clear All Results</span>
+                  <Download size={20} />
+                  <span>Export Results</span>
                 </button>
               )}
             </div>
+
+            {stats.scored > 0 && (
+              <button
+                onClick={clearResults}
+                className="flex items-center gap-2 text-gray-600 hover:text-red-600 font-semibold px-4 py-2 rounded-xl hover:bg-red-50 transition-colors"
+              >
+                <X size={16} />
+                <span>Clear Results</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Judging Progress */}
         {judging && (
-          <div className="mb-12">
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12">
-              <div className="flex items-center justify-center space-x-12">
-                <ProgressSpinner 
-                  progress={judgingProgress.current} 
-                  total={judgingProgress.total}
-                  text="AI Processing..."
-                  className="scale-125"
-                />
-                <div className="text-center max-w-lg">
-                  <div className="text-2xl font-bold text-gray-900 mb-3">
-                    AI Evaluation in Progress
-                  </div>
-                  <div className="text-gray-600 mb-4 text-lg">
-                    Currently analyzing: <span className="font-semibold text-blue-600">{judgingProgress.projectName}</span>
-                  </div>
-                  <div className="text-sm text-gray-500 leading-relaxed">
-                    Our advanced AI system is evaluating technical implementation, innovation potential, 
-                    market viability, and overall project quality. This comprehensive analysis typically 
-                    takes 2-3 minutes per project.
-                  </div>
-                </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 mb-8">
+            <div className="flex items-center justify-center gap-12">
+              <ProgressSpinner 
+                progress={judgingProgress.current} 
+                total={judgingProgress.total}
+                text="AI Processing..."
+                className="scale-125"
+              />
+              <div className="text-center max-w-lg">
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  AI Evaluation in Progress
+                </h3>
+                <p className="text-gray-600 mb-4 text-lg">
+                  Analyzing: <span className="font-semibold text-blue-600">{judgingProgress.projectName}</span>
+                </p>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Comprehensive analysis of technical implementation, innovation potential, 
+                  market viability, and overall project quality.
+                </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Enhanced Search and Filters */}
+        {/* Search and Filters */}
         {projects.length > 0 && (
-          <div className="mb-12">
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-              <div className="p-8">
-                {/* Search Bar */}
-                <div className="mb-8">
-                  <div className="relative">
-                    <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
-                    <input
-                      type="text"
-                      placeholder="Search projects, technologies, team members, or descriptions..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-16 pr-6 py-5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500 text-lg font-medium"
-                    />
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-8">
+            <div className="p-6">
+              {/* Search Bar */}
+              <div className="relative mb-6">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search projects, technologies, or team members..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
+                />
+              </div>
+
+              {/* Filters */}
+              <div className="space-y-6">
+                {/* Category Filters */}
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <SlidersHorizontal className="text-gray-600" size={18} />
+                    <span className="font-semibold text-gray-800">Category Filter</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {filterOptions.map((option) => {
+                      const Icon = option.icon;
+                      const isActive = filterBy === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          onClick={() => setFilterBy(option.value as any)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all text-sm border ${
+                            isActive
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                              : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200'
+                          }`}
+                        >
+                          <Icon size={16} />
+                          <span>{option.label}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                            isActive 
+                              ? 'bg-white/20 text-white' 
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {option.count}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Filter Pills */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center space-x-3">
-                      <SlidersHorizontal className="text-gray-600" size={20} />
-                      <span className="text-base font-bold text-gray-800">Filter Projects:</span>
+                {/* Prize Track Filter */}
+                {availableTracks.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Target className="text-gray-600" size={18} />
+                      <span className="font-semibold text-gray-800">Prize Track Filter</span>
                     </div>
-                    
-                    <div className="flex flex-wrap gap-3">
-                      {filterOptions.map((option) => {
-                        const Icon = option.icon;
-                        const isActive = filterBy === option.value;
-                        return (
-                          <button
-                            key={option.value}
-                            onClick={() => setFilterBy(option.value as any)}
-                            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center space-x-3 text-sm border ${
-                              isActive
-                                ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105'
-                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <Icon size={16} />
-                            <span>{option.label}</span>
-                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                              isActive 
-                                ? 'bg-white/20 text-white' 
-                                : 'bg-gray-200 text-gray-600'
-                            }`}>
-                              {option.count}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <select
+                      value={selectedTrack}
+                      onChange={(e) => setSelectedTrack(e.target.value)}
+                      className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-medium max-w-md"
+                    >
+                      <option value="all">All Prize Tracks</option>
+                      {availableTracks.map((track) => (
+                        <option key={track.uuid} value={track.uuid}>
+                          {track.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                )}
 
-                  <div className="flex items-center space-x-4">
-                    {/* Sort Dropdown */}
-                    <div className="flex items-center space-x-2">
-                      <ArrowUpDown className="text-gray-600" size={18} />
+                {/* Sort and Additional Options */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown className="text-gray-600" size={16} />
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as any)}
-                        className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-medium text-sm"
                       >
                         <option value="score">Sort by Score</option>
                         <option value="name">Sort by Name</option>
@@ -330,42 +380,51 @@ export default function HomePage() {
                       </select>
                     </div>
 
-                    {/* Scored Only Toggle */}
-                    <label className="flex items-center space-x-3 cursor-pointer px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={showOnlyScored}
                         onChange={(e) => setShowOnlyScored(e.target.checked)}
-                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm font-semibold text-gray-700">Scored only</span>
+                      <span className="text-sm font-medium text-gray-700">Scored only</span>
                     </label>
                   </div>
-                </div>
 
-                {/* Results Summary */}
-                <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
-                  <div className="text-base text-gray-700">
-                    Showing <span className="font-bold text-blue-600">{filteredProjects.length}</span> of <span className="font-bold">{projects.length}</span> projects
-                    {searchQuery && (
-                      <span className="text-gray-500"> matching "{searchQuery}"</span>
-                    )}
-                  </div>
-                  
-                  {(searchQuery || filterBy !== 'all' || showOnlyScored) && (
+                  {(searchQuery || filterBy !== 'all' || selectedTrack !== 'all' || showOnlyScored) && (
                     <button
                       onClick={() => {
                         setSearchQuery('');
                         setFilterBy('all');
+                        setSelectedTrack('all');
                         setShowOnlyScored(false);
                       }}
-                      className="text-sm text-red-600 hover:text-red-700 flex items-center space-x-2 font-semibold px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                      className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
                     >
                       <X size={16} />
-                      <span>Clear All Filters</span>
+                      <span>Clear Filters</span>
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* Results Summary */}
+              <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
+                <div className="text-gray-700">
+                  Showing <span className="font-semibold text-blue-600">{filteredProjects.length}</span> of <span className="font-semibold">{projects.length}</span> projects
+                  {searchQuery && (
+                    <span className="text-gray-500"> matching "{searchQuery}"</span>
+                  )}
+                  {selectedTrack !== 'all' && (
+                    <span className="text-gray-500"> in selected track</span>
+                  )}
+                </div>
+                
+                {filteredProjects.length > 0 && stats.scored > 0 && (
+                  <div className="text-sm text-gray-500">
+                    Average Score: <span className="font-semibold text-blue-600">{stats.avgScore}/100</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -373,12 +432,12 @@ export default function HomePage() {
 
         {/* Error State */}
         {error && (
-          <div className="mb-12 bg-red-50 border border-red-200 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-start space-x-4">
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6 shadow-sm mb-8">
+            <div className="flex items-start gap-4">
               <AlertCircle className="text-red-600 mt-1 flex-shrink-0" size={24} />
               <div>
-                <div className="font-bold text-red-900 text-lg">System Error</div>
-                <div className="text-red-800 mt-2">{error}</div>
+                <h3 className="font-bold text-red-900 text-lg">System Error</h3>
+                <p className="text-red-800 mt-2">{error}</p>
               </div>
             </div>
           </div>
@@ -389,8 +448,8 @@ export default function HomePage() {
           <div className="flex items-center justify-center py-32">
             <div className="text-center">
               <LoadingSpinner size="lg" />
-              <div className="mt-6 text-2xl font-bold text-gray-900">Fetching Projects</div>
-              <div className="text-gray-600 text-lg mt-2">Loading hackathon submissions from Devfolio...</div>
+              <h3 className="mt-6 text-2xl font-bold text-gray-900">Fetching Projects</h3>
+              <p className="text-gray-600 text-lg mt-2">Loading hackathon submissions...</p>
             </div>
           </div>
         )}
@@ -399,25 +458,25 @@ export default function HomePage() {
         {!loading && projects.length === 0 && !error && (
           <div className="text-center py-32">
             <div className="w-32 h-32 mx-auto bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-8 shadow-lg">
-              <BarChart3 className="h-16 w-16 text-blue-600" />
+              <Activity className="h-16 w-16 text-blue-600" />
             </div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">Ready to Judge Projects</h3>
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">Ready to Analyze Projects</h3>
             <p className="text-gray-600 mb-12 max-w-2xl mx-auto text-lg leading-relaxed">
-              Click "Fetch All Projects" to load hackathon submissions from Devfolio and start the 
-              comprehensive AI-powered evaluation process.
+              Load hackathon submissions and start comprehensive AI-powered evaluation across 
+              technical implementation, innovation, market potential, and code quality.
             </p>
-            <button onClick={fetchProjects} className="btn-primary text-lg px-12 py-5">
+            <button onClick={fetchProjects} className="flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors mx-auto">
               <BarChart3 size={20} />
-              Get Started
+              <span>Get Started</span>
             </button>
           </div>
         )}
 
         {/* Projects Grid */}
         {filteredProjects.length > 0 && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {filteredProjects.map((project, index) => (
-              <div key={project.uuid} className="animate-slideIn" style={{ animationDelay: `${index * 50}ms` }}>
+              <div key={project.uuid} className="animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
                 <ProjectCard
                   project={project}
                   onJudgeClick={judgeSingleProject}
@@ -434,58 +493,56 @@ export default function HomePage() {
               <Filter className="h-12 w-12 text-gray-400" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-4">No Projects Found</h3>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
-              No projects match your current search and filter criteria. Try adjusting your filters or search terms.
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              No projects match your current search and filter criteria. Try adjusting your filters.
             </p>
             <button
               onClick={() => {
                 setSearchQuery('');
                 setFilterBy('all');
+                setSelectedTrack('all');
                 setShowOnlyScored(false);
               }}
-              className="btn-secondary text-lg px-8 py-4"
+              className="flex items-center gap-3 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-semibold transition-colors mx-auto"
             >
               <X size={18} />
-              Reset All Filters
+              <span>Reset Filters</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Professional Footer */}
+      {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
           <div className="text-center">
-            <div className="flex items-center justify-center space-x-3 mb-6">
+            <div className="flex items-center justify-center gap-3 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
                 <BarChart3 className="text-white" size={24} />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                Hackathon AI Judge
-              </span>
+              <span className="text-2xl font-bold text-gray-900">Judge.AI</span>
             </div>
-            <p className="text-gray-600 mb-8 max-w-3xl mx-auto text-lg leading-relaxed">
+            <p className="text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
               Advanced AI-powered evaluation system for hackathon projects. Providing comprehensive 
-              analysis across technical implementation, innovation, market potential, and code quality 
-              using state-of-the-art machine learning models.
+              analysis using state-of-the-art machine learning models.
             </p>
-            <div className="flex items-center justify-center space-x-8 text-sm text-gray-500">
-              <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
+              <div className="flex items-center gap-2">
                 <CheckCircle size={18} className="text-green-500" />
-                <span className="font-semibold">AI-Powered Analysis</span>
+                <span className="font-medium">AI Analysis</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <TrendingUp size={18} className="text-blue-500" />
-                <span className="font-semibold">Real-time Scoring</span>
+                <span className="font-medium">Real-time Scoring</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <Award size={18} className="text-purple-500" />
-                <span className="font-semibold">Professional Grade</span>
+                <span className="font-medium">Professional Grade</span>
               </div>
             </div>
             {stats.total > 0 && (
               <div className="mt-8 text-sm text-gray-400">
-                Last updated: {new Date().toLocaleString()} • {stats.total} projects in database
+                Last updated: {new Date().toLocaleString()} • {stats.total} projects analyzed
               </div>
             )}
           </div>
