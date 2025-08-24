@@ -546,6 +546,9 @@ export default function HomePage() {
               </div>
             )}
           </div>
+          <div>
+              <a className= "text-blue-500" href="https://x.com/dhananjaypai08" target='_blank'>Built By Dhananjay</a>
+          </div>
         </div>
       </footer>
     </div>
