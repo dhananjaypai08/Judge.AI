@@ -32,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({ stats }) => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">Judge.AI</h1>
-              <p className="text-xs text-gray-500 font-medium">AI-Powered Project Analysis</p>
+              <p className="text-xs text-gray-500 font-medium">AI-Powered Judging</p>
             </div>
           </div>
           

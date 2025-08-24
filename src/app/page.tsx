@@ -203,11 +203,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              AI-Powered Hackathon Judging
+              Onchain Summer Awards
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Comprehensive evaluation system that analyzes technical implementation, innovation, 
-              market potential, and code quality with advanced machine learning models.
+              Comprehensive evaluation system that analyzes technical implementation, on-chain presence, innovation, 
+              market potential, and code quality.
             </p>
           </div>
         </div>
