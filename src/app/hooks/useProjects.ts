@@ -56,10 +56,10 @@ export const useProjects = (): UseProjectsResult => {
         from += size;
 
         // Safety break
-        if (allProjects.length >= 500) {
-          console.warn('Reached maximum project limit (500)');
-          break;
-        }
+        // if (allProjects.length >= 500) {
+        //   console.warn('Reached maximum project limit (500)');
+        //   break;
+        // }
       }
 
       // Convert to ScoredProject format with proper slug handling
