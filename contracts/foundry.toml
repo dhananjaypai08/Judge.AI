@@ -9,5 +9,5 @@ via_ir = true
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 [rpc_endpoints]
-base = "https://base-mainnet.infura.io"
+base = "https://base-mainnet.infura.io/v3/2WCbZ8YpmuPxUtM6PzbFOfY5k4B"
 base_sepolia = "https://base-sepolia.infura.io/v3/2WCbZ8YpmuPxUtM6PzbFOfY5k4B"
