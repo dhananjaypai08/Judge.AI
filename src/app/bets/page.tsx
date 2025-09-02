@@ -177,7 +177,7 @@ export default function BettingPage() {
                             type="button"
                             className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
                           >
-                            Wrong Network - Switch to Base Sepolia
+                            Wrong Network - Switch to Base
                           </button>
                         );
                       }
