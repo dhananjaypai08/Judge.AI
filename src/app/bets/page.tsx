@@ -299,7 +299,7 @@ export default function BettingPage() {
               </code>
             </p>
             <p className="text-sm text-gray-500">
-              Betting on innovation • Powered by Base Sepolia
+              Betting on innovation •
             </p>
           </div>
         </div>
