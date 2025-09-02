@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Project Alpha",
+    "AIpoints": 10,
+    "uri": "https://example.com/alpha",
+    "descripton": "AI project Alpha description.",
+    "devfolioLink": "https://devfolio.co/alpha",
+    "prizeTrack": "Track A",
+    "githubScore": "95"
+  },
+  {
+    "name": "Project Beta",
+    "AIpoints": 8,
+    "uri": "https://example.com/beta",
+    "descripton": "AI project Beta description.",
+    "devfolioLink": "https://devfolio.co/beta",
+    "prizeTrack": "Track B",
+    "githubScore": "90"
+  },
+  {
+    "name": "Project Gamma",
+    "AIpoints": 7,
+    "uri": "https://example.com/gamma",
+    "descripton": "AI project Gamma description.",
+    "devfolioLink": "https://devfolio.co/gamma",
+    "prizeTrack": "Track C",
+    "githubScore": "88"
+  },
+  {
+    "name": "Project Delta",
+    "AIpoints": 9,
+    "uri": "https://example.com/delta",
+    "descripton": "AI project Delta description.",
+    "devfolioLink": "https://devfolio.co/delta",
+    "prizeTrack": "Track D",
+    "githubScore": "92"
+  },
+  {
+    "name": "Project Epsilon",
+    "AIpoints": 6,
+    "uri": "https://example.com/epsilon",
+    "descripton": "AI project Epsilon description.",
+    "devfolioLink": "https://devfolio.co/epsilon",
+    "prizeTrack": "Track E",
+    "githubScore": "85"
+  },
+  {
+    "name": "Project Zeta",
+    "AIpoints": 8,
+    "uri": "https://example.com/zeta",
+    "descripton": "AI project Zeta description.",
+    "devfolioLink": "https://devfolio.co/zeta",
+    "prizeTrack": "Track F",
+    "githubScore": "89"
+  },
+  {
+    "name": "Project Eta",
+    "AIpoints": 7,
+    "uri": "https://example.com/eta",
+    "descripton": "AI project Eta description.",
+    "devfolioLink": "https://devfolio.co/eta",
+    "prizeTrack": "Track G",
+    "githubScore": "87"
+  },
+  {
+    "name": "Project Theta",
+    "AIpoints": 9,
+    "uri": "https://example.com/theta",
+    "descripton": "AI project Theta description.",
+    "devfolioLink": "https://devfolio.co/theta",
+    "prizeTrack": "Track H",
+    "githubScore": "93"
+  },
+  {
+    "name": "Project Iota",
+    "AIpoints": 5,
+    "uri": "https://example.com/iota",
+    "descripton": "AI project Iota description.",
+    "devfolioLink": "https://devfolio.co/iota",
+    "prizeTrack": "Track I",
+    "githubScore": "80"
+  },
+  {
+    "name": "Project Kappa",
+    "AIpoints": 6,
+    "uri": "https://example.com/kappa",
+    "descripton": "AI project Kappa description.",
+    "devfolioLink": "https://devfolio.co/kappa",
+    "prizeTrack": "Track J",
+    "githubScore": "84"
+  },
+  {
+    "name": "Project Lambda",
+    "AIpoints": 8,
+    "uri": "https://example.com/lambda",
+    "descripton": "AI project Lambda description.",
+    "devfolioLink": "https://devfolio.co/lambda",
+    "prizeTrack": "Track K",
+    "githubScore": "91"
+  },
+  {
+    "name": "Project Mu",
+    "AIpoints": 7,
+    "uri": "https://example.com/mu",
+    "descripton": "AI project Mu description.",
+    "devfolioLink": "https://devfolio.co/mu",
+    "prizeTrack": "Track L",
+    "githubScore": "86"
+  }
+]
