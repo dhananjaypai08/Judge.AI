@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 interface NavbarProps {
   stats: {
@@ -25,13 +26,37 @@ export const Navbar: React.FC<NavbarProps> = ({ stats }) => {
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo and branding */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">J</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">Judge.AI</h1>
-            </div>
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">J</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Judge.AI</h1>
+              </div>
+            </Link>
+            
+            {/* Navigation Links */}
+            <nav className="hidden md:flex items-center gap-6">
+              <Link 
+                href="/" 
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+              >
+                Projects
+              </Link>
+              <Link 
+                href="/bets" 
+                className="relative text-gray-700 hover:text-blue-600 font-medium transition-colors group"
+              >
+                <span>Bet on AI</span>
+                <span className="absolute -top-1 -right-10 px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded">
+                  LIVE
+                </span>
+                <div className="absolute top-8 left-0 w-48 p-2 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                  Bet on AI Predictions
+                </div>
+              </Link>
+            </nav>
           </div>
           
           {/* Status indicators */}
