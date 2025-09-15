@@ -1,6 +1,7 @@
 # Judge.AI
 
-An AI agent that makes fair judgment calls on innovation
+An AI agent that makes fair judgment calls on innovation.
+You can also bet on AI's prediction on the Top 12 Overall Projects
 
 ## Quick Start
 
